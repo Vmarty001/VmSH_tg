@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
-const webAppUrl = 'https://neon-marzipan-000e89.netlify.app/';
+const webAppUrl = 'https://ornate-selkie-c27577.netlify.app';
 
 const bot = new TelegramBot(token, {polling: true});
 const app = express();
@@ -38,7 +38,7 @@ bot.on('message', async (msg) => {
             const data = JSON.parse(msg?.web_app_data?.data)
             console.log(data)
             await bot.sendMessage(chatId, 'Спасибо за обратную связь!')
-            await bot.sendMessage(chatId, 'Ваша страна: ' + data?.country);
+            await bot.sendMessage(chatId, 'Ваш город: ' + data?.city);
             await bot.sendMessage(chatId, 'Ваш адрес доставки: ' + data?.sdekaddress);
             await bot.sendMessage(chatId, 'Ваш номер телефона: ' + data?.phone);
 
