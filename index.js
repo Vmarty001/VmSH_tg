@@ -2,15 +2,33 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
 
+require('dotenv').config();
+
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
-const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93'; // Замените на ваш токен провайдера платежей
+const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93';
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+const getInvoice = (chatId, totalPrice, items) => {
+    return {
+        chat_id: chatId,
+        provider_token: paymentProviderToken,
+        start_parameter: 'get_access',
+        title: 'Оплата заказа',
+        description: 'Оплата вашего заказа',
+        currency: 'RUB',
+        prices: [{ label: 'Общая стоимость', amount: totalPrice * 100 }], // цена в копейках
+        payload: {
+            unique_id: `${chatId}_${Number(new Date())}`,
+            provider_token: paymentProviderToken
+        }
+    };
+};
 
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
@@ -62,36 +80,20 @@ bot.on('message', async (msg) => {
 
             await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 
-            // Добавляем кнопку оплаты
-            await bot.sendInvoice(
-                chatId,
-                'Оплата заказа',
-                'Оплата вашего заказа',
-                'payload',
-                paymentProviderToken, // Здесь вставьте ваш токен провайдера платежей
-                'RUB',
-                [
-                    {
-                        label: 'Общая стоимость',
-                        amount: totalPrice * 100, // в копейках
-                    }
-                ],
-                {
-                    need_name: true,
-                    need_phone_number: true,
-                    need_email: true,
-                    need_shipping_address: true,
-                    is_flexible: true
-                }
-            );
-
-            setTimeout(async () => {
-                await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
-            }, 3000);
+            // Отправляем инвойс
+            await bot.sendInvoice(chatId, getInvoice(chatId, totalPrice, data?.addedItems));
         } catch (e) {
             console.log(e);
         }
     }
+});
+
+bot.on('pre_checkout_query', async (query) => {
+    await bot.answerPreCheckoutQuery(query.id, true);
+});
+
+bot.on('successful_payment', async (msg) => {
+    await bot.sendMessage(msg.chat.id, 'Платеж прошел успешно!');
 });
 
 app.post('/web-data', async (req, res) => {
