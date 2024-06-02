@@ -65,7 +65,7 @@ bot.on('message', async (msg) => {
                 'Оплата заказа',
                 'Оплата заказа в нашем магазине',
                 'payload', // payload - это информация, которая передаётся в платеж
-                '1744374395:TEST:a17adad57a607005eda9', // Замените на ваш provider token
+                '5334985814:TEST:551862', // Замените на ваш provider token
                 'some_random_string_key', // Замените на ваш уникальный ключ
                 'RUB',
                 data?.addedItems.map((item) => ({
