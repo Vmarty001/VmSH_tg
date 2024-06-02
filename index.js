@@ -54,7 +54,19 @@ bot.on('message', async (msg) => {
                 message += `📏 *Размер:* ${item.selectedSize}\n`;
                 message += `💰 *Цена:* ${item.price} ₽\n`;
             });
-            await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
+            await bot.sendInvoice(chatId,
+                'Купить Файл',
+                message,
+                'file',
+                '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93',
+                'RUB',
+                [{
+
+                    label: 'Файл',
+                    amount: 20000
+
+                }, { parse_mode: 'Markdown' }]);
+            //await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 
 
             setTimeout(async () => {
