@@ -1,28 +1,29 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { Telegraf } = require('telegraf');
 const express = require('express');
 const cors = require('cors');
 
-const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
-const webAppUrl = 'https://vmayshop.netlify.app/';
-const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93'; // Укажите ваш провайдерский токен здесь
-
-const bot = new TelegramBot(token, { polling: true });
+const bot = new Telegraf(process.env.BOT_TOKEN); // Токен вашего бота
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-const getInvoice = (chatId, totalPrice) => {
+const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93'; // Токен вашего провайдера платежей
+
+const getInvoice = (id, totalPrice) => {
     return {
-        chat_id: chatId,
+        chat_id: id,
         provider_token: paymentProviderToken,
         start_parameter: 'get_access',
-        title: 'Оплата заказа',
-        description: 'Оплата вашего заказа',
+        title: 'Название товара', // Название вашего товара
+        description: 'Описание товара', // Описание вашего товара
         currency: 'RUB',
-        prices: [{ label: 'Общая стоимость', amount: totalPrice * 100 }], // цена в копейках
+        prices: [{ label: 'Название товара', amount: totalPrice * 100 }], // Цена товара в копейках
+        photo_url: 'https://example.com/product.jpg', // Ссылка на изображение товара
+        photo_width: 500,
+        photo_height: 500,
         payload: {
-            unique_id: `${chatId}_${Number(new Date())}`,
+            unique_id: `${id}_${Date.now()}`,
             provider_token: paymentProviderToken
         }
     };
@@ -33,7 +34,7 @@ bot.on('message', async (msg) => {
     const text = msg.text;
 
     if (text === '/start') {
-        await bot.sendMessage(chatId, 'Ниже появится кнопка, заполни форму', {
+        await bot.sendMessage(chatId, 'Ниже появится кнопка, заполните форму', {
             reply_markup: {
                 keyboard: [
                     [{ text: 'Заполнить форму', web_app: { url: webAppUrl } }]
@@ -41,7 +42,7 @@ bot.on('message', async (msg) => {
             }
         });
 
-        await bot.sendMessage(chatId, 'Заходи в наш интернет магазин по кнопке ниже', {
+        await bot.sendMessage(chatId, 'Заходите в наш интернет-магазин по кнопке ниже', {
             reply_markup: {
                 inline_keyboard: [
                     [{ text: 'Сделать заказ', web_app: { url: webAppUrl } }]
@@ -55,9 +56,7 @@ bot.on('message', async (msg) => {
             const data = JSON.parse(msg?.web_app_data?.data);
             const user = msg.from;
             const userName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.username;
-            console.log(data);
 
-            // Формируем сообщение с информацией о клиенте и товарах
             let message = `Спасибо за обратную связь! 🎉\n\n`;
             message += `👤 *Ваше имя:* ${userName}\n`;
             message += `📍 *Ваш город:* ${data?.city}\n`;
@@ -65,47 +64,23 @@ bot.on('message', async (msg) => {
             message += `📞 *Номер телефона:* ${data?.phone}\n\n`;
             message += `🛍️ *Ваши товары:*\n`;
 
-            let totalPrice = 0;
-
             data?.addedItems.forEach((item, index) => {
                 message += `\n*Товар ${index + 1}:*\n`;
                 message += `🔹 *Название:* ${item.title}\n`;
                 message += `🔸 *Описание:* ${item.description}\n`;
                 message += `📏 *Размер:* ${item.selectedSize}\n`;
                 message += `💰 *Цена:* ${item.price} ₽\n`;
-                totalPrice += item.price;
             });
 
             await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 
-            // Отправляем сообщение с кнопкой оплаты
-            await bot.sendMessage(chatId, 'Для оплаты нажмите на кнопку ниже:', {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: 'Оплатить', callback_data: 'pay' }]
-                    ]
-                }
-            });
-
-            // Обрабатываем нажатие на кнопку оплаты
-            bot.on('callback_query', async (query) => {
-                if (query.data === 'pay') {
-                    await bot.sendInvoice(chatId, getInvoice(chatId, totalPrice));
-                }
-            });
-
+            setTimeout(async () => {
+                await bot.sendMessage(chatId, 'Вся информация будет отправлена в этот чат');
+            }, 3000);
         } catch (e) {
-            console.log(e);
+            console.error('Ошибка при отправке сообщения:', e);
         }
     }
-});
-
-bot.on('pre_checkout_query', async (query) => {
-    await bot.answerPreCheckoutQuery(query.id, true);
-});
-
-bot.on('successful_payment', async (msg) => {
-    await bot.sendMessage(msg.chat.id, 'Платеж прошел успешно!');
 });
 
 app.post('/web-data', async (req, res) => {
@@ -116,15 +91,17 @@ app.post('/web-data', async (req, res) => {
             id: queryId,
             title: 'Успешная покупка',
             input_message_content: {
-                message_text: `Поздравляю с покупкой, вы приобрели товар на сумму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
+                message_text: `Поздравляем с покупкой! Вы купили товары на сумму ${totalPrice} рублей: ${products.map(item => item.title).join(', ')}`
             }
         });
         return res.status(200).json({});
     } catch (e) {
+        console.error('Ошибка при отправке ответа на запрос:', e);
         return res.status(500).json({});
     }
 });
 
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => console.log(`Сервер запущен на порту ${PORT}`));
 
-app.listen(PORT, () => console.log('server started on PORT ' + PORT));
+bot.launch();
