@@ -77,38 +77,24 @@ bot.on('message', async (msg) => {
                     is_flexible: true
                 }
             );
-            bot.on('pre_checkout_query', async ctx => {
 
-    try {
+            bot.on('pre_checkout_query', async (ctx) => {
+                try {
+                    await bot.answerPreCheckoutQuery(ctx.id, true);
+                } catch (error) {
+                    console.log(error);
+                }
+            });
 
-        await bot.answerPreCheckoutQuery(ctx.id, true);
-
-    }
-    catch(error) {
-
-        console.log(error);
-
-    }
-
-})
-            bot.on('successful_payment', async ctx => {
-
-    try {
-
-        await bot.sendDocument(ctx.chat.id, `./${ctx.successful_payment.invoice_payload}.txt`, {
-
-            caption: `Спасибо за оплату ${ctx.successful_payment.invoice_payload}!`
-
-        })
-
-    }
-    catch(error) {
-
-        console.log(error);
-
-    }
-
-})
+            bot.on('successful_payment', async (ctx) => {
+                try {
+                    await bot.sendDocument(ctx.chat.id, `./${ctx.successful_payment.invoice_payload}.txt`, {
+                        caption: `Спасибо за оплату ${ctx.successful_payment.invoice_payload}!`
+                    });
+                } catch (error) {
+                    console.log(error);
+                }
+            });
 
         } catch (e) {
             console.log(e);
