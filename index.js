@@ -75,10 +75,6 @@ bot.on('message', async (msg) => {
                 'some_random_string_key', // Замените на ваш уникальный ключ
                 'RUB',
                 prices,
-                {
-                    need_name: true,
-                    is_flexible: true
-                }
             );
 
             bot.on('pre_checkout_query', async (query) => {
