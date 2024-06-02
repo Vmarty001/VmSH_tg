@@ -2,11 +2,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
 
-require('dotenv').config();
-
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
-const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93';
+const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93'; // Укажите ваш провайдерский токен здесь
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
