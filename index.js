@@ -4,6 +4,7 @@ const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
+const providerToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93';
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
@@ -60,37 +61,37 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 
             // Отправка счета на оплату
+            const prices = data?.addedItems.map((item) => ({
+                label: item.title,
+                amount: item.price * 100 // Цена в копейках
+            }));
+
             await bot.sendInvoice(
                 chatId,
                 'Оплата заказа',
                 'Оплата заказа в нашем магазине',
                 'payload', // payload - это информация, которая передаётся в платеж
-                '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93', // Замените на ваш provider token
+                providerToken, // Замените на ваш provider token
                 'some_random_string_key', // Замените на ваш уникальный ключ
                 'RUB',
-                data?.addedItems.map((item) => ({
-                    label: item.title,
-                    amount: item.price * 100 // Цена в копейках
-                })),
+                prices,
                 {
                     need_name: true,
                     is_flexible: true
                 }
             );
 
-            bot.on('pre_checkout_query', async (ctx) => {
+            bot.on('pre_checkout_query', async (query) => {
                 try {
-                    await bot.answerPreCheckoutQuery(ctx.id, true);
+                    await bot.answerPreCheckoutQuery(query.id, true);
                 } catch (error) {
                     console.log(error);
                 }
             });
 
-            bot.on('successful_payment', async (ctx) => {
+            bot.on('successful_payment', async (msg) => {
                 try {
-                    await bot.sendDocument(ctx.chat.id, `./${ctx.successful_payment.invoice_payload}.txt`, {
-                        caption: `Спасибо за оплату ${ctx.successful_payment.invoice_payload}!`
-                    });
+                    await bot.sendMessage(chatId, `Спасибо за оплату ${msg.successful_payment.invoice_payload}!`);
                 } catch (error) {
                     console.log(error);
                 }
