@@ -41,7 +41,7 @@ bot.on('message', async (msg) => {
             await bot.sendMessage(chatId, 'Ваш город: ' + data?.city);
             await bot.sendMessage(chatId, 'Ваш адрес доставки: ' + data?.sdekaddress);
             await bot.sendMessage(chatId, 'Ваш номер телефона: ' + data?.phone);
-            await bot.sendMessage(chatId, 'Ваш номер телефона: ' + data?.addedItems);
+            await bot.sendMessage(chatId, 'Ваш товар: ' + data?.item.title);
 
             setTimeout(async () => {
                 await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
