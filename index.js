@@ -4,6 +4,7 @@ const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
+const paymentProviderToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93'; // Замените на ваш токен провайдера платежей
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
@@ -67,7 +68,7 @@ bot.on('message', async (msg) => {
                 'Оплата заказа',
                 'Оплата вашего заказа',
                 'payload',
-                'PAYMENT_PROVIDER_TOKEN', // Здесь вставьте ваш токен провайдера платежей
+                paymentProviderToken, // Здесь вставьте ваш токен провайдера платежей
                 'RUB',
                 [
                     {
@@ -84,6 +85,9 @@ bot.on('message', async (msg) => {
                 }
             );
 
+            setTimeout(async () => {
+                await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
+            }, 3000);
         } catch (e) {
             console.log(e);
         }
