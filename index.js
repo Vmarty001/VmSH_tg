@@ -38,18 +38,21 @@ bot.on('message', async (msg) => {
             const data = JSON.parse(msg?.web_app_data?.data)
             console.log(data)
             // Отправка информации о клиенте
-            await bot.sendMessage(chatId, 'Спасибо за обратную связь!');
-            await bot.sendMessage(chatId, 'Ваш город: ' + data?.city);
-            await bot.sendMessage(chatId, 'Ваш адрес доставки: ' + data?.sdekaddress);
-            await bot.sendMessage(chatId, 'Ваш номер телефона: ' + data?.phone);
+ let message = `Спасибо за обратную связь! 🎉\n\n`;
+        message += `📍 *Ваш город:* ${data?.city}\n`;
+        message += `🏠 *Адрес доставки:* ${data?.sdekaddress}\n`;
+        message += `📞 *Номер телефона:* ${data?.phone}\n\n`;
+        message += `🛍️ *Ваши товары:*\n`;
 
-            // Отправка информации о товарах
-            data?.addedItems.forEach((item) => {
-                bot.sendMessage(chatId, 'Ваш товар: ' + item.title);
-                bot.sendMessage(chatId, 'Описание товара: ' + item.description);
-                bot.sendMessage(chatId, 'Размер: ' + item.selectedSize);
-                bot.sendMessage(chatId, 'Цена: ' + item.price + ' ₽');
-            });
+        data?.addedItems.forEach((item, index) => {
+            message += `\n*Товар ${index + 1}:*\n`;
+            message += `🔹 *Название:* ${item.title}\n`;
+            message += `🔸 *Описание:* ${item.description}\n`;
+            message += `📏 *Размер:* ${item.selectedSize}\n`;
+            message += `💰 *Цена:* ${item.price} ₽\n`;
+        });
+
+        await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 
             setTimeout(async () => {
                 await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
