@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
-const providerToken = '381764678:TEST:86704';
+const providerToken = '5334985814:TEST:551862';
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
