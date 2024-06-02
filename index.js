@@ -12,7 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const getInvoice = (chatId, totalPrice, items) => {
+const getInvoice = (chatId, totalPrice) => {
     return {
         chat_id: chatId,
         provider_token: paymentProviderToken,
@@ -78,8 +78,22 @@ bot.on('message', async (msg) => {
 
             await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 
-            // Отправляем инвойс
-            await bot.sendInvoice(chatId, getInvoice(chatId, totalPrice, data?.addedItems));
+            // Отправляем сообщение с кнопкой оплаты
+            await bot.sendMessage(chatId, 'Для оплаты нажмите на кнопку ниже:', {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: 'Оплатить', callback_data: 'pay' }]
+                    ]
+                }
+            });
+
+            // Обрабатываем нажатие на кнопку оплаты
+            bot.on('callback_query', async (query) => {
+                if (query.data === 'pay') {
+                    await bot.sendInvoice(chatId, getInvoice(chatId, totalPrice));
+                }
+            });
+
         } catch (e) {
             console.log(e);
         }
