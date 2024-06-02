@@ -36,9 +36,12 @@ bot.on('message', async (msg) => {
     if(msg?.web_app_data?.data) {
         try {
             const data = JSON.parse(msg?.web_app_data?.data)
+            const user = msg.from;  // Получение информации о пользователе
+            const userName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.username;
             console.log(data)
             // Отправка информации о клиенте
  let message = `Спасибо за обратную связь! 🎉\n\n`;
+        message += `👤 *Ваше имя:* ${userName}\n`;
         message += `📍 *Ваш город:* ${data?.city}\n`;
         message += `🏠 *Адрес доставки:* ${data?.sdekaddress}\n`;
         message += `📞 *Номер телефона:* ${data?.phone}\n\n`;
