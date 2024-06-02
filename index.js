@@ -37,11 +37,19 @@ bot.on('message', async (msg) => {
         try {
             const data = JSON.parse(msg?.web_app_data?.data)
             console.log(data)
-            await bot.sendMessage(chatId, 'Спасибо за обратную связь!')
+            // Отправка информации о клиенте
+            await bot.sendMessage(chatId, 'Спасибо за обратную связь!');
             await bot.sendMessage(chatId, 'Ваш город: ' + data?.city);
             await bot.sendMessage(chatId, 'Ваш адрес доставки: ' + data?.sdekaddress);
             await bot.sendMessage(chatId, 'Ваш номер телефона: ' + data?.phone);
-            await bot.sendMessage(chatId, 'Ваш товар: ' + data?.item.title);
+
+            // Отправка информации о товарах
+            data?.addedItems.forEach((item) => {
+                bot.sendMessage(chatId, 'Ваш товар: ' + item.title);
+                bot.sendMessage(chatId, 'Описание товара: ' + item.description);
+                bot.sendMessage(chatId, 'Размер: ' + item.selectedSize);
+                bot.sendMessage(chatId, 'Цена: ' + item.price + ' ₽');
+            });
 
             setTimeout(async () => {
                 await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
