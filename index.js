@@ -78,9 +78,6 @@ bot.on('message', async (msg) => {
                 }
             );
 
-            setTimeout(async () => {
-                await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
-            }, 3000);
         } catch (e) {
             console.log(e);
         }
