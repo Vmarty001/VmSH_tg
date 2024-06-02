@@ -1,45 +1,48 @@
-const TelegramBot = require('node-telegram-bot-api');
+const { Telegraf } = require('telegraf');
 const express = require('express');
 const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
 
-const bot = new TelegramBot(token, {polling: true});
+const bot = new Telegraf(token);
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text;
+bot.start((ctx) => {
+    ctx.reply('Ниже появится кнопка, заполни форму', {
+        reply_markup: {
+            keyboard: [
+                [{ text: 'Заполнить форму', url: webAppUrl }]
+            ]
+        }
+    });
 
-    if(text === '/start') {
-        await bot.sendMessage(chatId, 'Ниже появится кнопка, заполни форму', {
-            reply_markup: {
-                keyboard: [
-                    [{text: 'Заполнить форму', web_app: {url: webAppUrl}}]
-                ]
-            }
-        })
+    ctx.reply('Заходи в наш интернет магазин по кнопке ниже', {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Сделать заказ', url: webAppUrl }]
+            ]
+        }
+    });
+});
 
-        await bot.sendMessage(chatId, 'Заходи в наш интернет магазин по кнопке ниже', {
-            reply_markup: {
-                inline_keyboard: [
-                    [{text: 'Сделать заказ', web_app: {url: webAppUrl}}]
-                ]
-            }
-        })
+bot.on('message', async (ctx) => {
+    const chatId = ctx.chat.id;
+    const text = ctx.message.text;
+
+    if (text === '/start') {
+        // Необходимый код уже в обработчике start
     }
 
-    if(msg?.web_app_data?.data) {
+    if (ctx.message?.web_app) {
         try {
-            const data = JSON.parse(msg?.web_app_data?.data)
-            const user = msg.from;  // Получение информации о пользователе
+            const data = JSON.parse(ctx.message.web_app);
+            const user = ctx.message.from;
             const userName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.username;
-            console.log(data)
-            // Отправка информации о клиенте
+
             let message = `Спасибо за обратную связь! 🎉\n\n`;
             message += `👤 *Ваше имя:* ${userName}\n`;
             message += `📍 *Ваш город:* ${data?.city}\n`;
@@ -54,29 +57,12 @@ bot.on('message', async (msg) => {
                 message += `📏 *Размер:* ${item.selectedSize}\n`;
                 message += `💰 *Цена:* ${item.price} ₽\n`;
             });
-            
-            await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-case "buyFile":
 
-  await bot.sendInvoice(ctx.message.chat.id, 
-                      'Купить Файл', 
-                      'Покупка файла', 
-                      'file', 
-                      process.env.PROVIDER_TOKEN, 
-                      'RUB', 
-                      [{
-                          
-                          label: 'Файл',
-                          amount: 20000
-                      
-                      }]);
-
-  break;
-
+            await ctx.replyWithMarkdown(message);
 
             setTimeout(async () => {
-                await bot.sendMessage(chatId, 'Всю информацию вы получите в этом чате');
-            }, 3000)
+                await ctx.reply('Вся информация будет отправлена в этот чат');
+            }, 3000);
         } catch (e) {
             console.log(e);
         }
@@ -84,21 +70,16 @@ case "buyFile":
 });
 
 app.post('/web-data', async (req, res) => {
-    const {queryId, products = [], totalPrice} = req.body;
+    const { queryId, products = [], totalPrice } = req.body;
     try {
-        await bot.answerWebAppQuery(queryId, {
-            type: 'article',
-            id: queryId,
-            title: 'Успешная покупка',
-            input_message_content: {
-                message_text: ` Поздравляю с покупкой, вы приобрели товар на сумму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
-            }
-        })
+        await bot.telegram.answerCbQuery(queryId, {
+            text: ` Поздравляю с покупкой, вы приобрели товар на сумму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
+        });
         return res.status(200).json({});
     } catch (e) {
         return res.status(500).json({})
     }
-})
+});
 
 const PORT = 8000;
 
