@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://vmayshop.netlify.app/';
-const providerToken = '5334985814:TEST:551862';
+const providerToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93';
 
 const bot = new TelegramBot(token, { polling: true });
 const app = express();
@@ -66,6 +66,11 @@ bot.on('message', async (msg) => {
                 amount: item.price * 100 // Цена в копейках
             }));
 
+            if (prices.length === 0) {
+                await bot.sendMessage(chatId, 'Произошла ошибка: не указаны товары для оплаты.');
+                return;
+            }
+
             await bot.sendInvoice(
                 chatId,
                 'Оплата заказа',
@@ -95,6 +100,7 @@ bot.on('message', async (msg) => {
 
         } catch (e) {
             console.log(e);
+            await bot.sendMessage(chatId, 'Произошла ошибка при обработке данных. Попробуйте позже.');
         }
     }
 });
