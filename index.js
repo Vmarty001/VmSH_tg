@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
+//const webAppUrl = 'https://vmayshop.netlify.app/';
 const webAppUrl = 'https://vmayshop.netlify.app/';
 const providerToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93';
 
