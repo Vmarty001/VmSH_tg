@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise'); // Используем promise-версию mysql2
+const mysql = require('mysql2/promise');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://main--xprojectvmay.netlify.app/';
@@ -16,10 +16,10 @@ app.use(cors());
 // Подключение к базе данных
 async function connectToDatabase() {
   const connection = await mysql.createConnection({
-    host: '109.196.164.164', // IP-адрес или хостнейм вашего сервера
-    user: 'vmay',            // Имя пользователя MySQL
-    password: 'vmay290403',  // Пароль пользователя MySQL
-    database: 'mydatabase'   // Имя базы данных
+    host: '109.196.164.164',
+    user: 'server',
+    password: 'server290403',
+    database: 'mydatabase'
   });
   return connection;
 }
@@ -56,7 +56,7 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId, 'Click the button below to open the web app:', webAppKeyboard);
 });
 
-// Маршрут для добавления пользователя
+// Обработка POST-запроса для добавления пользователя
 app.post('/add-user', async (req, res) => {
   const { username } = req.body;
   if (!username) {
@@ -69,44 +69,8 @@ app.post('/add-user', async (req, res) => {
     await connection.end();
     res.status(200).send('User added successfully');
   } catch (err) {
-    console.error('Ошибка добавления пользователя в базу данных:', err.stack);
-    res.status(500).send('Error adding user to database');
-  }
-});
-
-// Пример использования базы данных в обработчике callback_query
-bot.on('callback_query', async (query) => {
-  const chatId = query.message.chat.id;
-  const data = query.data;
-
-  if (data === 'open_web_app') {
-    bot.sendMessage(chatId, `Opening Web App: ${webAppUrl}`, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: 'Open Web App',
-              web_app: { url: webAppUrl }
-            }
-          ]
-        ]
-      }
-    });
-  } else {
-    try {
-      const connection = await connectToDatabase();
-
-      // Пример выполнения запроса к базе данных
-      const [rows, fields] = await connection.execute('SELECT * FROM testdatabase');
-      console.log('Результаты запроса:', rows);
-
-      bot.sendMessage(chatId, 'Data retrieved from database: ' + JSON.stringify(rows));
-
-      await connection.end();
-    } catch (err) {
-      console.error('Ошибка подключения к базе данных:', err.stack);
-      bot.sendMessage(chatId, 'Ошибка подключения к базе данных.');
-    }
+    console.error('Database error:', err);
+    res.status(500).send('Error adding user');
   }
 });
 
