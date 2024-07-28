@@ -1,10 +1,10 @@
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
+const mysql = require('mysql2/promise'); // Используем promise-версию mysql2
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
-//const webAppUrl = 'https://vmayshop.netlify.app/';
-const webAppUrl = 'https://vmayshop.netlify.app/';
+const webAppUrl = 'https://main--xprojectvmay.netlify.app/';
 const providerToken = '401643678:TEST:03413306-2d36-48a0-86d5-4adec20f7f93';
 
 const bot = new TelegramBot(token, { polling: true });
@@ -13,108 +13,106 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-bot.on('message', async (msg) => {
-    const chatId = msg.chat.id;
-    const text = msg.text;
+// Подключение к базе данных
+async function connectToDatabase() {
+  const connection = await mysql.createConnection({
+    host: '109.196.164.164', // IP-адрес или хостнейм вашего сервера
+    user: 'vmay',            // Имя пользователя MySQL
+    password: 'vmay290403',  // Пароль пользователя MySQL
+    database: 'mydatabase'   // Имя базы данных
+  });
+  return connection;
+}
 
-    if (text === '/start') {
-        await bot.sendMessage(chatId, 'Переходи в наш магазин по кнопке ниже!', {
-            reply_markup: {
-                keyboard: [
-                    [{ text: 'Открыть магазин', web_app: { url: webAppUrl } }]
-                ]
-            }
-        });
+// Проверка подключения к базе данных
+async function checkDatabaseConnection() {
+  try {
+    const connection = await connectToDatabase();
+    console.log('Подключение к базе данных установлено.');
+    await connection.end();
+  } catch (err) {
+    console.error('Ошибка подключения к базе данных при запуске:', err.stack);
+    process.exit(1); // Завершение работы приложения при ошибке подключения
+  }
+}
+
+// Обработчик команды /start
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+
+  const webAppKeyboard = {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: 'Open Web App',
+            web_app: { url: webAppUrl }
+          }
+        ]
+      ]
     }
+  };
 
-    if (msg?.web_app_data?.data) {
-        try {
-            const data = JSON.parse(msg?.web_app_data?.data);
-            const user = msg.from;  // Получение информации о пользователе
-            const userName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.username;
-            console.log(data);
-
-            // Отправка информации о клиенте
-            let message = `Спасибо за обратную связь! 🎉\n\n`;
-            message += `👤 *Ваше имя:* ${userName}\n`;
-            message += `📍 *Ваш город:* ${data?.city}\n`;
-            message += `🏠 *Адрес доставки:* ${data?.sdekaddress}\n`;
-            message += `📞 *Номер телефона:* ${data?.phone}\n\n`;
-            message += `🛍️ *Ваши товары:*\n`;
-
-            data?.addedItems.forEach((item, index) => {
-                message += `\n*Товар ${index + 1}:*\n`;
-                message += `🔹 *Название:* ${item.title}\n`;
-                message += `🔸 *Описание:* ${item.description}\n`;
-                message += `📏 *Размер:* ${item.selectedSize}\n`;
-                message += `💰 *Цена:* ${item.price} ₽\n`;
-            });
-
-            // Отправка сообщения о заказе
-            await bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
-
-            // Отправка счета на оплату
-            const prices = data?.addedItems.map((item) => ({
-                label: item.title,
-                amount: item.price * 100 // Цена в копейках
-            }));
-
-            if (prices.length === 0) {
-                await bot.sendMessage(chatId, 'Произошла ошибка: не указаны товары для оплаты.');
-                return;
-            }
-
-            await bot.sendInvoice(
-                chatId,
-                'Оплата заказа',
-                'Оплата заказа в нашем магазине',
-                'payload', // payload - это информация, которая передаётся в платеж
-                providerToken, // Замените на ваш provider token
-                'some_random_string_key', // Замените на ваш уникальный ключ
-                'RUB',
-                prices,
-            );
-
-            bot.on('pre_checkout_query', async (query) => {
-                try {
-                    await bot.answerPreCheckoutQuery(query.id, true);
-                } catch (error) {
-                    console.log(error);
-                }
-            });
-
-            bot.on('successful_payment', async (msg) => {
-                try {
-                    await bot.sendMessage(chatId, `Спасибо за оплату ${msg.successful_payment.invoice_payload}!`);
-                } catch (error) {
-                    console.log(error);
-                }
-            });
-
-        } catch (e) {
-            console.log(e);
-            await bot.sendMessage(chatId, 'Произошла ошибка при обработке данных. Попробуйте позже.');
-        }
-    }
+  bot.sendMessage(chatId, 'Click the button below to open the web app:', webAppKeyboard);
 });
 
-app.post('/web-data', async (req, res) => {
-    const { queryId, products = [], totalPrice } = req.body;
+// Маршрут для добавления пользователя
+app.post('/add-user', async (req, res) => {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).send('Username is required');
+  }
+
+  try {
+    const connection = await connectToDatabase();
+    await connection.execute('INSERT INTO users (username) VALUES (?)', [username]);
+    await connection.end();
+    res.status(200).send('User added successfully');
+  } catch (err) {
+    console.error('Ошибка добавления пользователя в базу данных:', err.stack);
+    res.status(500).send('Error adding user to database');
+  }
+});
+
+// Пример использования базы данных в обработчике callback_query
+bot.on('callback_query', async (query) => {
+  const chatId = query.message.chat.id;
+  const data = query.data;
+
+  if (data === 'open_web_app') {
+    bot.sendMessage(chatId, `Opening Web App: ${webAppUrl}`, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: 'Open Web App',
+              web_app: { url: webAppUrl }
+            }
+          ]
+        ]
+      }
+    });
+  } else {
     try {
-        await bot.answerWebAppQuery(queryId, {
-            type: 'article',
-            id: queryId,
-            title: 'Успешная покупка',
-            input_message_content: {
-                message_text: `Поздравляю с покупкой, вы приобрели товар на сумму ${totalPrice}, ${products.map(item => item.title).join(', ')}`
-            }
-        });
-        return res.status(200).json({});
-    } catch (e) {
-        return res.status(500).json({});
+      const connection = await connectToDatabase();
+
+      // Пример выполнения запроса к базе данных
+      const [rows, fields] = await connection.execute('SELECT * FROM testdatabase');
+      console.log('Результаты запроса:', rows);
+
+      bot.sendMessage(chatId, 'Data retrieved from database: ' + JSON.stringify(rows));
+
+      await connection.end();
+    } catch (err) {
+      console.error('Ошибка подключения к базе данных:', err.stack);
+      bot.sendMessage(chatId, 'Ошибка подключения к базе данных.');
     }
+  }
 });
 
-const PORT = 8000;
-
-app.listen(PORT, () => console.log('server started on PORT ' + PORT));
+// Запуск сервера Express и проверка подключения к базе данных
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, async () => {
+  console.log(`Server is running on port ${PORT}`);
+  await checkDatabaseConnection(); // Проверка подключения к базе данных при запуске
+});

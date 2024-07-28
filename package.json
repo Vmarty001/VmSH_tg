@@ -10,11 +10,13 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.22"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.11.0",
     "node-telegram-bot-api": "^0.58.0"
   }
 }
