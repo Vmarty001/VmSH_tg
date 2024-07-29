@@ -2,8 +2,6 @@ const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
-const https = require('https');
-const fs = require('fs');
 
 const token = '5826846570:AAFuYkjJ-2dEpvFRGwHCLatFxsrYl7r6Oig';
 const webAppUrl = 'https://main--xprojectvmay.netlify.app/';
@@ -76,17 +74,9 @@ app.post('/add-user', async (req, res) => {
   }
 });
 
-// Загрузка сертификатов
-const options = {
-  key: fs.readFileSync('server.key'),
-  cert: fs.readFileSync('server.cert')
-};
-
-// Запуск сервера Express с поддержкой HTTPS
+// Запуск сервера Express и проверка подключения к базе данных
 const PORT = process.env.PORT || 3000;
-const server = https.createServer(options, app);
-
-server.listen(PORT, async () => {
-  console.log(`Server is running on https://localhost:${PORT}`);
+app.listen(PORT, async () => {
+  console.log(`Server is running on port ${PORT}`);
   await checkDatabaseConnection(); // Проверка подключения к базе данных при запуске
 });
