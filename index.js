@@ -19,8 +19,8 @@ app.use(cors());
 async function connectToDatabase() {
   const connection = await mysql.createConnection({
     host: '109.196.164.164',
-    user: 'vmay',
-    password: 'vmay290403',
+    user: 'server',
+    password: 'server290403',
     database: 'mydatabase'
   });
   return connection;
